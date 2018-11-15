@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"runtime"
 	"sync"
 	"time"
@@ -70,7 +71,8 @@ func (transporter *Transporter) GetServer() *string {
 		},
 	}
 	jsonValue, _ := json.Marshal(verify)
-	res, err := http.Post("https://"+transporter.Node+"/api/node/verifyPM2", "application/json", bytes.NewBuffer(jsonValue))
+
+	res, err := transporter.httpClient().Post("https://"+transporter.Node+"/api/node/verifyPM2", "application/json", bytes.NewBuffer(jsonValue))
 	if err != nil {
 		log.Println(err)
 		return nil
@@ -109,7 +111,7 @@ func (transporter *Transporter) Connect() {
 	headers.Add("X-PM2-VERSION", transporter.Version)
 	headers.Add("X-PROTOCOL-VERSION", "1")
 
-	c, _, err := websocket.DefaultDialer.Dial(*transporter.wsNode, headers)
+	c, _, err := transporter.websocketDialer().Dial(*transporter.wsNode, headers)
 	if err != nil {
 		time.Sleep(2 * time.Second)
 		transporter.isConnecting = false
@@ -168,6 +170,32 @@ func (transporter *Transporter) SetHandlers() {
 			}
 		}
 	}()
+}
+
+func (transporter *Transporter) websocketDialer() (dialer *websocket.Dialer) {
+	dialer = websocket.DefaultDialer
+	if transporter.Config.Proxy == "" {
+		return
+	}
+	url, err := url.Parse(transporter.Config.Proxy)
+	if err != nil {
+		log.Println("Proxy config incorrect, using default network for websocket", err)
+		return
+	}
+	dialer.Proxy = http.ProxyURL(url)
+	return
+}
+
+func (transporter *Transporter) httpClient() *http.Client {
+	if transporter.Config.Proxy == "" {
+		return &http.Client{}
+	}
+	url, err := url.Parse(transporter.Config.Proxy)
+	if err != nil {
+		log.Println("Proxy config incorrect, using default network for http", err)
+		return &http.Client{}
+	}
+	return &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(url)}}
 }
 
 // MessagesHandler from KM

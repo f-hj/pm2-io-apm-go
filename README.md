@@ -75,6 +75,18 @@ if err != nil {
 }
 ```
 
+## Use a proxy for APM requests and WebSocket
+```golang
+  pm2io.Pm2Io{
+    Config: &structures.Config{
+      PublicKey:  "myPublic",
+      PrivateKey: "myPrivate",
+      Name:       "Golang app",
+      Proxy:      "socks5://localhost:1080/",
+    },
+  }
+```
+
 ## Connect logrus to PM2 Plus
 If you are using logrus, this is an example to send logs and create exceptions on PM2 Plus when you log an error
 

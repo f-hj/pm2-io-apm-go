@@ -13,6 +13,7 @@ type Config struct {
 	Name       string
 	ServerName *string
 	Node       *string
+	Proxy      string
 }
 
 // GenerateServerName with random values
