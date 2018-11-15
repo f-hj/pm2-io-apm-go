@@ -9,8 +9,11 @@ pipeline:
     commands:
       - go get -t -v
       - go get gopkg.in/h2non/gock.v1
-      - go test -v -coverprofile=coverage.txt -covermode=atomic $(go list ./...)
-      - bash -c "bash <(curl -s https://codecov.io/bash) -t $$codecov_token"
+      - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+      - chmod +x ./cc-test-reporter
+      - ./cc-test-reporter before-build
+      - go test -v -coverprofile=c.out -covermode=atomic $(go list ./...)
+      - ./cc-test-reporter after-build --exit-code 0 || echo “Skipping CC coverage upload” or upload-coverage || echo “Skipping CC coverage upload”
       - go build
 
   slack:
